@@ -1,0 +1,524 @@
+/* Mobile-first layout. The app is designed for a phone-style viewport
+   even though Phase 1 ships as a Windows desktop exe, so the same
+   component tree can be reused on mobile later. */
+
+:root {
+  --app-max-width: 480px;
+  --brand-green: #2e7d4f;
+  --brand-green-hover: #25603f;
+  --brand-green-light: #e8f5ee;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f5f6f8;
+  color: #1a1d21;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #ffffff;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background canvas — sits behind all page content */
+.app-shell .key-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Page content sits above the canvas */
+.app-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* Each page fills the shell and pushes its primary action to the bottom. */
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.page-body {
+  flex: 1;
+}
+
+/* Vertically centred page body */
+.page-centred {
+  justify-content: center;
+}
+
+.page-body-centred {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.page-footer {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+}
+
+/* Green headings on all pages. The heading breaks out of the card's
+   larger padding so long titles fit on one line, while paragraphs and
+   buttons keep the full padding. */
+.page-heading {
+  color: var(--brand-green);
+  font-weight: 700;
+  text-align: center;
+  margin: calc(-3rem + 1.25rem) -2.5rem 0;
+  padding: 1.25rem 1.5rem 0;
+}
+
+/* Checker card has smaller padding — adjust the breakout to match */
+.checker-card .page-heading {
+  margin: calc(-2rem + 1.25rem) -1.5rem 0;
+}
+
+/* Spaced paragraphs for intro pages */
+.intro-paragraph {
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+
+.intro-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+/* Green primary buttons (overrides Bootstrap default) */
+.btn-primary {
+  background-color: var(--brand-green);
+  border-color: var(--brand-green);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--brand-green-hover);
+  border-color: var(--brand-green-hover);
+}
+
+.btn-primary:active {
+  background-color: var(--brand-green-hover);
+  border-color: var(--brand-green-hover);
+}
+
+/* Welcome page */
+.welcome-page {
+  justify-content: center;
+}
+
+/* Shared content card — semi-transparent grey, used on all pages */
+.content-card {
+  position: relative;
+  z-index: 1;
+  text-align: left;
+  background: rgba(200, 204, 210, 0.55);
+  backdrop-filter: blur(3px);
+  border-radius: 12px;
+  padding: 3rem 2.5rem;
+  margin: 0 1.25rem;
+}
+
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.welcome-title {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--brand-green);
+  margin-bottom: 0;
+}
+
+.welcome-subtitle {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.welcome-body {
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+  line-height: 1.6;
+}
+
+.welcome-button {
+  margin-top: 1.5rem;
+}
+
+/* Checker card — same padding as the info card below it */
+.checker-card {
+  padding: 2rem 1.5rem;
+}
+
+/* Info card (left-aligned, used on strength checker).
+   Inherits padding/border-radius from .content-card; only overrides
+   the colour, alignment, and font size. */
+.info-card {
+  background: rgba(200, 204, 210, 0.55);
+  font-size: 0.72rem;
+  color: #3a4a3f;
+  line-height: 1.5;
+  padding: 2rem 1.5rem;
+}
+
+.info-card p {
+  margin-bottom: 0.6rem;
+}
+
+.info-card p:last-child {
+  margin-bottom: 0;
+}
+
+.info-card-italic {
+  font-style: italic;
+}
+
+/* Passphrase text — red italic (replaces codeblocks) */
+.passphrase-text {
+  color: #c0392b;
+  font-style: italic;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* Intro sections with sub-headings and bullet lists */
+.intro-section {
+  margin-top: 1.25rem;
+  text-align: left;
+}
+
+.intro-subheading {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #3a4a3f;
+}
+
+.intro-bullets {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0;
+}
+
+.intro-bullets li {
+  margin-bottom: 0.3rem;
+  line-height: 1.5;
+  font-size: 0.85rem;
+}
+
+/* Strength meter */
+.strength-meter {
+  margin-top: 1rem;
+}
+
+.strength-bar {
+  height: 8px;
+  border-radius: 4px;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+/* Checking... loading indicator with animated dots */
+.strength-checking {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #5a6072;
+}
+
+.checking-dots span {
+  opacity: 0;
+  animation: dot-cycle 1.2s infinite;
+}
+
+.checking-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.checking-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-cycle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Strength results — no box, just lines */
+.strength-results {
+  margin-top: 0.75rem;
+  text-align: left;
+}
+
+.strength-line {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.strength-suggestion {
+  font-size: 0.875rem;
+  color: #5a6072;
+  margin-top: 0.5rem;
+}
+
+/* Progress bar (top of screen during onboarding) */
+.progress-bar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid #e6e8ee;
+}
+
+.progress-bar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--brand-green);
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.progress-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 1.5rem;
+}
+
+.progress-bar-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #5a6072;
+  white-space: nowrap;
+}
+
+.progress-bar-main {
+  flex: 1;
+}
+
+/* Streamer animation when progress reaches 100% */
+.progress-bar-complete .progress-bar {
+  background-image: linear-gradient(
+    90deg,
+    var(--brand-green) 0%,
+    #4caf6f 25%,
+    #66bb6a 50%,
+    #4caf6f 75%,
+    var(--brand-green) 100%
+  );
+  background-size: 200% 100%;
+  animation: progress-streamer 1.5s linear infinite;
+}
+
+@keyframes progress-streamer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Global close (X) button — replaces native Windows title bar */
+.global-close-btn {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.75rem;
+  z-index: 100;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1;
+  color: #5a6072;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.global-close-btn:hover {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+/* Cleanup overlay (warning dialog) */
+.cleanup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+}
+
+.cleanup-dialog {
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  background: #ffffff;
+}
+
+/* Mode selection options */
+.mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.mode-option {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 1rem 1.25rem;
+  border: 2px solid #d6dbe6;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mode-option:hover {
+  border-color: var(--brand-green);
+}
+
+.mode-option.selected {
+  border-color: var(--brand-green);
+  background: var(--brand-green-light);
+}
+
+.mode-option-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--brand-green);
+}
+
+.mode-option-desc {
+  font-size: 0.85rem;
+  color: #5a6072;
+  margin-top: 0.25rem;
+}
+
+/* Sign-up link section on Bitwarden page */
+.signup-link {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.signup-link p {
+  font-size: 0.85rem;
+  color: #5a6072;
+  margin-bottom: 0.5rem;
+}
+
+/* Skip link at the bottom of the Bitwarden page */
+.skip-link {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border: none;
+  background: none;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #5a6072;
+  cursor: pointer;
+  text-decoration: underline;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.skip-link:hover {
+  color: var(--brand-green);
+}
+
+/* Credential entry forms within account collection */
+.credential-forms {
+  margin-top: 0.5rem;
+}
+
+.credential-form {
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.credential-form-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--brand-green);
+  margin-bottom: 0.5rem;
+}
+
+/* Review list on the review screen */
+.review-list {
+  margin-top: 0.5rem;
+}
+
+.review-category {
+  margin-bottom: 1rem;
+}
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.85rem;
+}
+
+.review-item-name {
+  font-weight: 600;
+  color: #3a4a3f;
+}
+
+.review-item-detail {
+  color: #5a6072;
+  font-size: 0.8rem;
+}
+
+/* Import instructions ordered list */
+.import-steps {
+  text-align: left;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.import-steps li {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
