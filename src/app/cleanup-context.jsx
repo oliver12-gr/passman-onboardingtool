@@ -56,6 +56,7 @@ export function CleanupProvider({ children }) {
     const steps = [
       'Clearing entered credentials...',
       'Removing temporary files...',
+      'Uninstalling Bitwarden CLI...',
       'Wiping memory...',
     ];
 
@@ -73,6 +74,11 @@ export function CleanupProvider({ children }) {
       if (filePath && window.appRuntime?.deleteFile) {
         await window.appRuntime.deleteFile(filePath);
       }
+    }
+
+    // Remove the temp-installed Bitwarden CLI.
+    if (window.appRuntime?.cleanupCli) {
+      await window.appRuntime.cleanupCli();
     }
 
     // Close the app.

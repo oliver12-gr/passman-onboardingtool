@@ -17,6 +17,14 @@ contextBridge.exposeInMainWorld('appRuntime', {
   bitwardenMfa: (data) => ipcRenderer.invoke('bitwarden:mfa', data),
   bitwardenSave: (item) => ipcRenderer.invoke('bitwarden:save', item),
 
+  // --- Bitwarden installation -------------------------------------------
+  installBitwardenWindows: () => ipcRenderer.invoke('bitwarden:installWindows'),
+  installBitwardenCli: () => ipcRenderer.invoke('bitwarden:installCli'),
+  checkCliInstalled: () => ipcRenderer.invoke('bitwarden:checkCliInstalled'),
+  checkDesktopInstalled: () => ipcRenderer.invoke('bitwarden:checkDesktopInstalled'),
+  detectBrowser: () => ipcRenderer.invoke('system:detectBrowser'),
+  cleanupCli: () => ipcRenderer.invoke('bitwarden:cleanupCli'),
+
   // --- File -------------------------------------------------------------
   saveFile: (data) => ipcRenderer.invoke('file:save', data),
   deleteFile: (filePath) => ipcRenderer.invoke('file:delete', filePath),

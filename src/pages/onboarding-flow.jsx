@@ -3,6 +3,7 @@ import { ProgressBarTop } from '../components/progress-bar.jsx';
 import { ONBOARDING_STEPS } from '../content/onboarding-content.js';
 import { ModeSelectPage } from './mode-select-page.jsx';
 import { BitwardenIntroPage } from './bitwarden-intro-page.jsx';
+import { InstallBitwardenPage } from './install-bitwarden-page.jsx';
 import { AccountCollectionPage } from './account-collection-page.jsx';
 import { useApp } from '../app/app-context.jsx';
 
@@ -13,6 +14,7 @@ import { useApp } from '../app/app-context.jsx';
 const PAGE_COMPONENTS = {
   'mode-select': ModeSelectPage,
   'bitwarden-intro': BitwardenIntroPage,
+  'install-bitwarden': InstallBitwardenPage,
   'account-collection': AccountCollectionPage,
 };
 
@@ -25,6 +27,7 @@ const PAGE_COMPONENTS = {
 const STEP_WEIGHTS = {
   'mode-select': 1,
   'bitwarden-intro': 1,
+  'install-bitwarden': 1,
   'account-collection': 6,
 };
 
@@ -38,7 +41,8 @@ export function OnboardingFlow() {
   // collection page to report its internal phase progress.
   const [subProgress, setSubProgress] = useState(0);
 
-  // Build the active step list based on the selected mode.
+  // Build the active step list based on the selected mode and whether
+  // the user skipped the Bitwarden sign-in.
   const steps = useMemo(() => {
     if (!mode) return [ONBOARDING_STEPS[0]]; // only mode-select
 
@@ -47,15 +51,28 @@ export function OnboardingFlow() {
       return true;
     });
 
-    return [
-      ...baseSteps,
-      {
-        id: 'account-collection',
-        kind: 'account-collection',
-        heading: 'Secure your accounts',
-      },
-    ];
-  }, [mode]);
+    // Insert the install-bitwarden step after the Bitwarden intro,
+    // but only if the user actually signed in (didn't skip).
+    const result = [];
+    for (const s of baseSteps) {
+      result.push(s);
+      if (s.kind === 'bitwarden-intro' && !skippedBitwarden) {
+        result.push({
+          id: 'install-bitwarden',
+          kind: 'install-bitwarden',
+          heading: 'Install Bitwarden',
+        });
+      }
+    }
+
+    result.push({
+      id: 'account-collection',
+      kind: 'account-collection',
+      heading: 'Secure your accounts',
+    });
+
+    return result;
+  }, [mode, skippedBitwarden]);
 
   const step = steps[index];
   const isLast = index === steps.length - 1;
@@ -87,6 +104,12 @@ export function OnboardingFlow() {
   const goNext = (data) => {
     if (step.kind === 'mode-select' && data?.mode) {
       setMode(data.mode);
+      // When mode is first set, the steps list grows from 1 item to
+      // several. Don't check isLast here — it's based on the old
+      // 1-item list and would prevent advancing.
+      setSubProgress(0);
+      setIndex((i) => i + 1);
+      return;
     }
     if (step.kind === 'bitwarden-intro' && data?.bitwardenConnected) {
       setBitwardenConnected(true);
@@ -137,7 +160,9 @@ export function OnboardingFlow() {
 
   return (
     <>
-      <ProgressBarTop />
+      {/* Hide the progress bar on the mode-select page — there's only
+          one step at that point so the bar adds no value. */}
+      {step.kind !== 'mode-select' && <ProgressBarTop />}
       <PageComponent
         step={step}
         onNext={goNext}

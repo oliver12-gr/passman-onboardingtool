@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Form, InputGroup, ProgressBar } from 'react-bootstrap';
 import { NavButton } from '../components/nav-button.jsx';
 import { ACCOUNT_CATEGORIES, IMPORT_FORMATS } from '../content/account-content.js';
@@ -75,12 +75,24 @@ function collectAccounts(selectedServices, credentials) {
     for (const svc of cat.services) {
       if (!selectedServices[svc.id]) continue;
       const cred = credentials[svc.id] || {};
+      const url = cred.url || svc.url || '';
+
+      // For email accounts, use "Email - [domain]" as the item name
+      // instead of the generic "Email provider" label.
+      let name = svc.name;
+      if (svc.id === 'email' && url) {
+        let domain = url;
+        try { domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname; }
+        catch { /* keep raw value if URL parsing fails */ }
+        name = `Email - ${domain}`;
+      }
+
       accounts.push({
         id: svc.id,
-        name: svc.name,
+        name,
         username: cred.username || '',
         password: cred.password || '',
-        url: cred.url || svc.url || '',
+        url,
         ios: svc.ios || '',
         android: svc.android || '',
         notes: '',
@@ -102,6 +114,8 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   const [submitStatus, setSubmitStatus] = useState('');
   const [submitErrors, setSubmitErrors] = useState([]);
   const [downloadPath, setDownloadPath] = useState('');
+  // Prevents handleAutoSubmit from being called multiple times.
+  const hasStartedSaveRef = useRef(false);
 
   const isAutoMode = mode === 'auto' || (mode === 'easy' && bitwardenConnected);
   const category = ACCOUNT_CATEGORIES[catIndex];
@@ -225,6 +239,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
     setPhase('submit');
     setSubmitProgress(0);
     setSubmitErrors([]);
+    hasStartedSaveRef.current = false;
   };
 
   // --- Submit phase (auto mode) ----------------------------------------
@@ -234,7 +249,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
 
     for (let i = 0; i < accounts.length; i++) {
       const acct = accounts[i];
-      setSubmitStatus(`Saving ${acct.name}...`);
+      setSubmitStatus(`${i + 1} of ${accounts.length}: uploading ${acct.name}`);
       try {
         const result = await window.appRuntime?.bitwardenSave({
           name: acct.name,
@@ -260,6 +275,16 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
       : 'All accounts saved successfully!');
     setPhase('done');
   };
+
+  // Kick off the auto-save when entering the submit phase. The ref
+  // prevents multiple calls caused by re-renders during the async loop.
+  useEffect(() => {
+    if (phase === 'submit' && isAutoMode && !hasStartedSaveRef.current) {
+      hasStartedSaveRef.current = true;
+      handleAutoSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, isAutoMode]);
 
   // --- Submit phase (manual mode) --------------------------------------
   const handleManualDownload = async () => {
@@ -419,14 +444,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   // Render: Submit phase (auto mode — saving to Bitwarden)
   // ====================================================================
   if (phase === 'submit' && isAutoMode) {
-    const isSaving = submitProgress > 0 && submitProgress < 100;
-    const isDone = submitProgress >= 100;
-
-    // Kick off the save when entering this phase.
-    if (!isSaving && !isDone) {
-      // Use a microtask to avoid setState during render.
-      setTimeout(() => handleAutoSubmit(), 0);
-    }
+    // The save is kicked off by the useEffect above when entering this phase.
 
     return (
       <section className="page page-centred" aria-labelledby="saving-heading">

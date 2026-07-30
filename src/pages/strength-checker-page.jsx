@@ -27,6 +27,10 @@ export function StrengthCheckerPage({ page, onBack, isLast }) {
   const [result, setResult] = useState(null);
   const [checking, setChecking] = useState(false);
   const debounceRef = useRef(null);
+  // Tracks whether the dictionary has been loaded at least once.
+  // Only show "checking" on the first evaluation; subsequent keystrokes
+  // keep the previous result visible to avoid layout jumping.
+  const dictionaryLoadedRef = useRef(false);
 
   // Re-evaluate (debounced) whenever the input changes.
   useEffect(() => {
@@ -38,6 +42,7 @@ export function StrengthCheckerPage({ page, onBack, isLast }) {
       evaluateStrength(value).then((res) => {
         setResult(res);
         setChecking(false);
+        dictionaryLoadedRef.current = true;
       });
     }, 200);
 
@@ -84,7 +89,13 @@ export function StrengthCheckerPage({ page, onBack, isLast }) {
                 onChange={(e) => {
                   setValue(e.target.value);
                   if (e.target.value) {
-                    setChecking(true);
+                    // Only show "checking" on the very first evaluation
+                    // (dictionary may still be loading). After that,
+                    // keep the previous result visible during debounce
+                    // to prevent the layout from jumping.
+                    if (!dictionaryLoadedRef.current) {
+                      setChecking(true);
+                    }
                   } else {
                     setResult(null);
                     setChecking(false);

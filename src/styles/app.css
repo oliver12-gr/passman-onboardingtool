@@ -522,3 +522,99 @@ body {
   font-size: 0.85rem;
   line-height: 1.5;
 }
+
+/* Install Bitwarden checklist */
+.install-step {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  text-align: left;
+}
+
+.install-step-complete {
+  border-color: var(--brand-green);
+  background: var(--brand-green-light);
+}
+
+.install-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.install-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--brand-green);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.install-step-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #3a4a3f;
+  flex: 1;
+}
+
+.install-check {
+  color: var(--brand-green);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.install-step-desc {
+  font-size: 0.8rem;
+  color: #5a6072;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.qr-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.qr-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.qr-label {
+  font-size: 0.75rem;
+  color: #5a6072;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* CLI install loader */
+.cli-loader-card {
+  text-align: center;
+}
+
+.cli-loader-percent {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-green);
+  margin-bottom: 0.75rem;
+}
+
+.cli-loader-message {
+  margin-top: 0.75rem;
+  color: #5a6072;
+  font-size: 0.9rem;
+}
