@@ -3,10 +3,44 @@ import { NavButton } from '../components/nav-button.jsx';
 import { CliInstallLoader } from '../components/cli-install-loader.jsx';
 
 /**
- * Mode selection page. Presents three options (Easy, Auto, Manual) as
- * selectable cards. The user must pick one before continuing.
+ * Inline SVG icons for mode cards. Keeps the bundle small and avoids
+ * external icon dependencies.
+ */
+const MODE_ICONS = {
+  robot: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="8" width="16" height="12" rx="2" />
+      <path d="M12 4v4" />
+      <circle cx="12" cy="3" r="1" />
+      <circle cx="9" cy="13" r="1.5" />
+      <circle cx="15" cy="13" r="1.5" />
+      <path d="M9 17h6" />
+      <path d="M2 13h2M20 13h2" />
+    </svg>
+  ),
+  key: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="15" r="4" />
+      <path d="M10.5 12.5L20 3" />
+      <path d="M16 7l3 3" />
+      <path d="M18 5l3 3" />
+    </svg>
+  ),
+  clipboard: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="4" width="14" height="18" rx="2" />
+      <path d="M9 4V2h6v2" />
+      <path d="M9 11h6M9 15h6M9 7h6" />
+    </svg>
+  ),
+};
+
+/**
+ * Mode selection page. Presents three options (AI, Standard, Manual) as
+ * side-by-side selectable cards with icons. AI Mode is disabled (coming
+ * soon). Standard Mode is pre-selected as the default.
  *
- * When Auto or Easy mode is selected, the app checks whether the
+ * When Standard (auto) mode is selected, the app checks whether the
  * Bitwarden CLI (`bw`) is installed. If not, a loading screen is shown
  * while it is installed via npm into a temp directory. If the install
  * fails, an error page is shown with options to try again or switch
@@ -18,14 +52,13 @@ import { CliInstallLoader } from '../components/cli-install-loader.jsx';
  * @param {function} [props.onBack]
  */
 export function ModeSelectPage({ step, onNext, onBack }) {
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState('auto');
   const [installing, setInstalling] = useState(false);
   const [installError, setInstallError] = useState(null);
 
   const handleContinue = async () => {
-    // For auto and easy modes, check if the Bitwarden CLI is installed.
-    // If not, show the loading screen while it installs.
-    if ((selected === 'auto' || selected === 'easy')
+    // For auto (standard) mode, check if the Bitwarden CLI is installed.
+    if (selected === 'auto'
         && window.appRuntime?.checkCliInstalled) {
       try {
         const result = await window.appRuntime.checkCliInstalled();
@@ -67,7 +100,7 @@ export function ModeSelectPage({ step, onNext, onBack }) {
               Bitwarden CLI install failed
             </h1>
             <p className="intro-paragraph">
-              The Bitwarden CLI is required for Auto Mode to work its
+              The Bitwarden CLI is required for Standard Mode to work its
               magic. We couldn&apos;t install it automatically.
             </p>
             <p className="intro-paragraph" style={{ fontSize: '0.8rem', color: '#5a6072' }}>
@@ -107,18 +140,28 @@ export function ModeSelectPage({ step, onNext, onBack }) {
           <p className="intro-paragraph text-center">{step.subtitle}</p>
 
           <div className="mode-options">
-            {step.options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                className={`mode-option${selected === opt.id ? ' selected' : ''}`}
-                onClick={() => setSelected(opt.id)}
-                aria-pressed={selected === opt.id}
-              >
-                <span className="mode-option-title">{opt.title}</span>
-                <span className="mode-option-desc">{opt.description}</span>
-              </button>
-            ))}
+            {step.options.map((opt) => {
+              const isDisabled = !!opt.disabled;
+              const isSelected = selected === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`mode-option${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`}
+                  onClick={() => !isDisabled && setSelected(opt.id)}
+                  aria-pressed={isSelected}
+                  disabled={isDisabled}
+                >
+                  <span className="mode-option-icon">
+                    {MODE_ICONS[opt.icon] || null}
+                  </span>
+                  <span className="mode-option-title">{opt.title}</span>
+                  {opt.badge && (
+                    <span className="mode-option-badge">{opt.badge}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <div className="page-footer">

@@ -6,6 +6,42 @@ import { generateImportFile } from '../scripts/import-generator.js';
 import { useCleanup } from '../app/cleanup-context.jsx';
 
 /**
+ * Inline SVG icons for essential service selection cards.
+ * Social media and subscription services use favicons instead.
+ */
+const SERVICE_ICONS = {
+  envelope: (
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 7l10 7 10-7" />
+    </svg>
+  ),
+  money: (
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 6v12" />
+      <path d="M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.5 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5" />
+    </svg>
+  ),
+  phone: (
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="7" y="2" width="10" height="20" rx="2" />
+      <path d="M11 18h2" />
+    </svg>
+  ),
+};
+
+/**
+ * Builds a local favicon path for a service. Favicons are bundled in
+ * public/favicons/ so the app works fully offline.
+ * @param {string} serviceId - The service's unique ID.
+ * @returns {string} A relative path to the favicon image.
+ */
+function faviconPath(serviceId) {
+  return `./favicons/${serviceId}.png`;
+}
+
+/**
  * Maps email domains to their webmail provider URLs. Used to smart
  * auto-fill the URL field for the email service when the user types
  * their email address.
@@ -67,9 +103,10 @@ function lookupEmailUrl(email) {
  * Collects all entered accounts from state into a flat array.
  * @param {object} selectedServices
  * @param {object} credentials
+ * @param {object[]} [customAccounts] - User-added custom accounts.
  * @returns {object[]}
  */
-function collectAccounts(selectedServices, credentials) {
+function collectAccounts(selectedServices, credentials, customAccounts = []) {
   const accounts = [];
   for (const cat of ACCOUNT_CATEGORIES) {
     for (const svc of cat.services) {
@@ -100,11 +137,27 @@ function collectAccounts(selectedServices, credentials) {
       });
     }
   }
+
+  // Add custom user-added accounts.
+  for (const acct of customAccounts) {
+    accounts.push({
+      id: acct.id,
+      name: acct.name || 'Custom account',
+      username: acct.username || '',
+      password: acct.password || '',
+      url: acct.url || '',
+      ios: '',
+      android: '',
+      notes: '',
+      category: 'Other',
+    });
+  }
+
   return accounts;
 }
 
 export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubProgress }) {
-  // Flow phases: 'collect' → 'review' → 'submit' → 'import-instructions' → 'done'
+  // Flow phases: 'collect' → 'custom-accounts' → 'review' → 'submit' → 'import-instructions' → 'done'
   const [phase, setPhase] = useState('collect');
   const [catIndex, setCatIndex] = useState(0);
   const [selectedServices, setSelectedServices] = useState({});
@@ -116,6 +169,12 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   const [downloadPath, setDownloadPath] = useState('');
   // Prevents handleAutoSubmit from being called multiple times.
   const hasStartedSaveRef = useRef(false);
+  // Index within the current category's selected services for pagination.
+  const [credIndex, setCredIndex] = useState(0);
+  // Custom user-added accounts.
+  const [customAccounts, setCustomAccounts] = useState([]);
+  // Index for paginating through custom accounts.
+  const [customIndex, setCustomIndex] = useState(0);
 
   const isAutoMode = mode === 'auto' || (mode === 'easy' && bitwardenConnected);
   const category = ACCOUNT_CATEGORIES[catIndex];
@@ -130,6 +189,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
       registerClear(() => {
         setSelectedServices({});
         setCredentials({});
+        setCustomAccounts([]);
         setSubmitProgress(0);
       });
     }
@@ -142,27 +202,31 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   }, [downloadPath, registerFile]);
 
   // Report sub-progress to the global progress bar.
-  // Sub-steps: collect (3 categories), review, submit, [import-instructions], done
-  // Auto mode: 6 sub-steps, Manual mode: 7 sub-steps (with import-instructions).
-  const totalSubSteps = isAutoMode ? 6 : 7;
+  // The collection phases are the bulk of the user's work, so they
+  // are weighted to fill ~70% of the bar. The remaining phases share
+  // the last 30%.
+  const numCategories = ACCOUNT_CATEGORIES.length;
 
   useEffect(() => {
-    let subStep = 0;
+    let progress = 0;
     if (phase === 'collect') {
-      subStep = catIndex; // 0, 1, 2
+      // Spread categories across 0%–60%.
+      progress = (catIndex / numCategories) * 0.6;
+    } else if (phase === 'custom-accounts') {
+      progress = 0.7;
     } else if (phase === 'review') {
-      subStep = 3;
+      progress = 0.8;
     } else if (phase === 'submit') {
-      subStep = 4;
+      progress = 0.88;
     } else if (phase === 'import-instructions') {
-      subStep = 5;
+      progress = 0.94;
     } else if (phase === 'done') {
-      subStep = totalSubSteps; // 100%
+      progress = 1; // 100%
     }
     if (onSubProgress) {
-      onSubProgress(subStep / totalSubSteps);
+      onSubProgress(progress);
     }
-  }, [phase, catIndex, isAutoMode, totalSubSteps, onSubProgress]);
+  }, [phase, catIndex, numCategories, onSubProgress]);
 
   const isLastCategory = catIndex === ACCOUNT_CATEGORIES.length - 1;
 
@@ -171,6 +235,8 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
       ...prev,
       [serviceId]: !prev[serviceId],
     }));
+    // Reset credential pagination index when selection changes.
+    setCredIndex(0);
   };
 
   const updateCredential = (serviceId, field, value) => {
@@ -226,14 +292,16 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
 
   const handleCollectNext = () => {
     if (isLastCategory) {
-      setPhase('review');
+      setPhase('custom-accounts');
+      setCustomIndex(0);
     } else {
       setCatIndex((i) => i + 1);
+      setCredIndex(0);
     }
   };
 
   // --- Review phase ----------------------------------------------------
-  const allAccounts = collectAccounts(selectedServices, credentials);
+  const allAccounts = collectAccounts(selectedServices, credentials, customAccounts);
 
   const handleReviewSubmit = () => {
     setPhase('submit');
@@ -244,11 +312,14 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
 
   // --- Submit phase (auto mode) ----------------------------------------
   const handleAutoSubmit = async () => {
-    const accounts = collectAccounts(selectedServices, credentials);
+    const accounts = collectAccounts(selectedServices, credentials, customAccounts);
     const errors = [];
 
     for (let i = 0; i < accounts.length; i++) {
       const acct = accounts[i];
+      // Set progress to just past the previous account so the bar isn't
+      // empty while uploading (e.g. account 2 of 3 → 33%).
+      setSubmitProgress(Math.round((i / accounts.length) * 100));
       setSubmitStatus(`${i + 1} of ${accounts.length}: uploading ${acct.name}`);
       try {
         const result = await window.appRuntime?.bitwardenSave({
@@ -288,7 +359,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
 
   // --- Submit phase (manual mode) --------------------------------------
   const handleManualDownload = async () => {
-    const accounts = collectAccounts(selectedServices, credentials);
+    const accounts = collectAccounts(selectedServices, credentials, customAccounts);
     try {
       const content = generateImportFile(importFormat, accounts);
       const fmt = IMPORT_FORMATS.find((f) => f.id === importFormat);
@@ -376,14 +447,17 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   // Render: Done phase — summary, invite user to close
   // ====================================================================
   if (phase === 'done') {
-    const accounts = collectAccounts(selectedServices, credentials);
+    const accounts = collectAccounts(selectedServices, credentials, customAccounts);
     const errorCount = submitErrors.length;
 
     // Build a per-category summary.
-    const categorySummary = ACCOUNT_CATEGORIES.map((cat) => {
-      const count = accounts.filter((a) => a.category === cat.name).length;
-      return { name: cat.name, count };
-    }).filter((c) => c.count > 0);
+    const categorySummary = [
+      ...ACCOUNT_CATEGORIES.map((cat) => ({
+        name: cat.name,
+        count: accounts.filter((a) => a.category === cat.name).length,
+      })),
+      { name: 'Other', count: accounts.filter((a) => a.category === 'Other').length },
+    ].filter((c) => c.count > 0);
 
     return (
       <section className="page page-centred" aria-labelledby="done-heading">
@@ -445,6 +519,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   // ====================================================================
   if (phase === 'submit' && isAutoMode) {
     // The save is kicked off by the useEffect above when entering this phase.
+    const isUploading = submitProgress < 100;
 
     return (
       <section className="page page-centred" aria-labelledby="saving-heading">
@@ -453,8 +528,15 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
             <h1 id="saving-heading" className="h3 page-heading">
               Saving to Bitwarden
             </h1>
-            <ProgressBar now={submitProgress} className="strength-bar mt-3" />
-            <p className="strength-checking mt-2">{submitStatus}</p>
+            <ProgressBar
+              now={submitProgress}
+              animated={isUploading}
+              className="strength-bar mt-3"
+            />
+            <p className="strength-checking mt-2">
+              {submitStatus}
+              {isUploading && <span className="uploading-dots" />}
+            </p>
             {submitErrors.length > 0 && (
               <div className="mt-2">
                 {submitErrors.map((err, i) => (
@@ -516,9 +598,169 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   }
 
   // ====================================================================
+  // Render: Custom accounts phase — add any other accounts
+  // ====================================================================
+  if (phase === 'custom-accounts') {
+    const currentCustom = customAccounts[customIndex];
+    const customCount = customAccounts.length;
+    const isLastCustom = customIndex === customCount - 1;
+
+    const addCustomAccount = () => {
+      // If the current card is blank, stay on it instead of adding
+      // a new blank one.
+      if (currentCustom
+          && !currentCustom.name
+          && !currentCustom.url
+          && !currentCustom.username
+          && !currentCustom.password) {
+        return;
+      }
+      setCustomAccounts((prev) => [...prev, {
+        id: `custom-${Date.now()}`,
+        name: '',
+        url: '',
+        username: '',
+        password: '',
+        showPassword: false,
+      }]);
+      setCustomIndex(customAccounts.length); // move to the new (blank) one
+    };
+
+    const removeCustomAccount = (idx) => {
+      setCustomAccounts((prev) => prev.filter((_, i) => i !== idx));
+      // Adjust index if needed.
+      if (idx <= customIndex && customIndex > 0) {
+        setCustomIndex((i) => Math.max(0, i - 1));
+      }
+    };
+
+    const updateCustomAccount = (idx, field, value) => {
+      setCustomAccounts((prev) => prev.map((a, i) =>
+        i === idx ? { ...a, [field]: value } : a
+      ));
+    };
+
+    const handleCustomNext = () => {
+      if (customCount > 0 && !isLastCustom) {
+        setCustomIndex((i) => i + 1);
+      } else {
+        setPhase('review');
+      }
+    };
+
+    const handleCustomBack = () => {
+      if (customIndex > 0) {
+        setCustomIndex((i) => i - 1);
+      } else {
+        // Go back to the last category (subscriptions).
+        setPhase('collect');
+        setCatIndex(ACCOUNT_CATEGORIES.length - 1);
+        const lastCat = ACCOUNT_CATEGORIES[ACCOUNT_CATEGORIES.length - 1];
+        const lastSelected = lastCat.services.filter((s) => selectedServices[s.id]);
+        setCredIndex(Math.max(0, lastSelected.length - 1));
+      }
+    };
+
+    return (
+      <section className="page page-centred" aria-labelledby="custom-heading">
+        <div className="page-body page-body-centred">
+          <div className="content-card checker-card">
+            <h1 id="custom-heading" className="h3 page-heading">
+              Would you like to add any other accounts?
+            </h1>
+            <p className="intro-paragraph">
+              Add any accounts that weren&apos;t listed in the previous steps.
+              You can add as many as you like, or skip this step.
+            </p>
+
+            {customCount > 0 && currentCustom && (
+              <div className="credential-forms">
+                <p className="intro-subheading mt-3">
+                  Enter your details ({customIndex + 1} of {customCount} added)
+                </p>
+                <div className="credential-form custom-credential-form">
+                  <button
+                    type="button"
+                    className="custom-remove-btn"
+                    onClick={() => removeCustomAccount(customIndex)}
+                    aria-label="Remove this account"
+                    title="Remove"
+                  >
+                    &#10005;
+                  </button>
+                  <Form.Control
+                    className="mb-2"
+                    type="text"
+                    placeholder="Name (e.g. My Bank, Gym membership)"
+                    value={currentCustom.name || ''}
+                    onChange={(e) => updateCustomAccount(customIndex, 'name', e.target.value)}
+                    aria-label="Account name"
+                    autoComplete="off"
+                  />
+                  <Form.Control
+                    className="mb-2"
+                    type="url"
+                    placeholder="Website URL"
+                    value={currentCustom.url || ''}
+                    onChange={(e) => updateCustomAccount(customIndex, 'url', e.target.value)}
+                    aria-label="Website URL"
+                  />
+                  <Form.Control
+                    className="mb-2"
+                    type="text"
+                    placeholder="Username or email"
+                    value={currentCustom.username || ''}
+                    onChange={(e) => updateCustomAccount(customIndex, 'username', e.target.value)}
+                    aria-label="Username or email"
+                    autoComplete="off"
+                  />
+                  <InputGroup className="mb-2">
+                    <Form.Control
+                      type={currentCustom.showPassword ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={currentCustom.password || ''}
+                      onChange={(e) => updateCustomAccount(customIndex, 'password', e.target.value)}
+                      aria-label="Password"
+                      autoComplete="off"
+                    />
+                    <NavButton
+                      label={currentCustom.showPassword ? 'Hide' : 'Show'}
+                      variant="outline-secondary"
+                      onClick={() => updateCustomAccount(customIndex, 'showPassword', !currentCustom.showPassword)}
+                    />
+                  </InputGroup>
+                </div>
+              </div>
+            )}
+
+            <div className="page-footer">
+              <NavButton
+                label="Back"
+                variant="outline-secondary"
+                onClick={handleCustomBack}
+              />
+              <NavButton
+                label="Add more"
+                variant="outline-secondary"
+                onClick={addCustomAccount}
+              />
+              <NavButton
+                label={customCount > 0 && !isLastCustom ? 'Next' : 'Review'}
+                onClick={handleCustomNext}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ====================================================================
   // Render: Review phase
   // ====================================================================
   if (phase === 'review') {
+    const otherAccounts = allAccounts.filter((a) => a.category === 'Other');
+
     return (
       <section className="page page-centred" aria-labelledby="review-heading">
         <div className="page-body page-body-centred">
@@ -559,6 +801,22 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
                     </div>
                   );
                 })}
+                {otherAccounts.length > 0 && (
+                  <div key="other" className="review-category">
+                    <p className="intro-subheading">Other</p>
+                    {otherAccounts.map((acct) => (
+                      <div key={acct.id} className="review-item">
+                        <span className="review-item-name">{acct.name}</span>
+                        <span className="review-item-detail">
+                          {acct.username || '—'}
+                        </span>
+                        <span className="review-item-detail">
+                          {acct.password ? '✓' : '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -566,7 +824,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
               <NavButton
                 label="Back"
                 variant="outline-secondary"
-                onClick={() => setPhase('collect')}
+                onClick={() => setPhase('custom-accounts')}
               />
               <NavButton
                 label={isAutoMode ? 'Save to Bitwarden' : 'Generate Import File'}
@@ -583,9 +841,48 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   // ====================================================================
   // Render: Collect phase (default — category-by-category entry)
   // ====================================================================
-  const selectedCount = category.services.filter(
+  const selectedInCategory = category.services.filter(
     (s) => selectedServices[s.id],
-  ).length;
+  );
+  const selectedCount = selectedInCategory.length;
+
+  // Clamp credIndex in case a service was deselected.
+  const effectiveCredIndex = Math.min(credIndex, Math.max(0, selectedCount - 1));
+  const currentSvc = selectedInCategory[effectiveCredIndex];
+  const isLastCred = effectiveCredIndex === selectedCount - 1;
+  // The bottom button says "Next" while there are more credentials to
+  // fill in, "Continue" on the last credential of a non-final category.
+  // The last category now goes to custom-accounts, so it also says "Next".
+  const bottomButtonLabel = selectedCount === 0
+    ? (isLastCategory ? 'Next' : 'Continue')
+    : (isLastCred
+        ? (isLastCategory ? 'Next' : 'Continue')
+        : 'Next');
+
+  const handleBottomButton = () => {
+    if (selectedCount > 0 && !isLastCred) {
+      // Still more credentials in this category — advance to next.
+      setCredIndex((i) => i + 1);
+    } else {
+      // All credentials done (or none selected) — next category or review.
+      handleCollectNext();
+    }
+  };
+
+  const handleCredBack = () => {
+    if (effectiveCredIndex > 0) {
+      setCredIndex((i) => i - 1);
+    } else if (catIndex > 0) {
+      // Go back to previous category.
+      setCatIndex((i) => i - 1);
+      // Set credIndex to last credential of previous category.
+      const prevCat = ACCOUNT_CATEGORIES[catIndex - 1];
+      const prevSelected = prevCat.services.filter((s) => selectedServices[s.id]);
+      setCredIndex(Math.max(0, prevSelected.length - 1));
+    } else if (onBack) {
+      onBack();
+    }
+  };
 
   return (
     <section className="page page-centred" aria-labelledby="cat-heading">
@@ -597,26 +894,63 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
           <p className="intro-paragraph">{category.description}</p>
 
           <p className="intro-subheading">Which do you use?</p>
-          <div className="mode-options">
-            {category.services.map((svc) => (
-              <button
-                key={svc.id}
-                type="button"
-                className={`mode-option${selectedServices[svc.id] ? ' selected' : ''}`}
-                onClick={() => toggleService(svc.id)}
-                aria-pressed={selectedServices[svc.id]}
-              >
-                <span className="mode-option-title">{svc.name}</span>
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const hasIcons = category.services.some((s) => s.icon || s.favicon);
+            const isCompact = hasIcons && category.services.length > 3;
+            const containerCls = hasIcons
+              ? `mode-options${isCompact ? ' compact' : ''}`
+              : 'service-options';
+            return (
+              <div className={containerCls}>
+                {category.services.map((svc) => {
+                  const hasIcon = !!svc.icon;
+                  const hasFavicon = !!svc.favicon;
+                  const containerClass = (hasIcon || hasFavicon)
+                    ? `mode-option${isCompact ? ' compact' : ''}`
+                    : 'service-option';
+                  const titleClass = (hasIcon || hasFavicon)
+                    ? 'mode-option-title'
+                    : 'service-option-title';
+                  return (
+                    <button
+                      key={svc.id}
+                      type="button"
+                      className={`${containerClass}${selectedServices[svc.id] ? ' selected' : ''}`}
+                      onClick={() => toggleService(svc.id)}
+                      aria-pressed={selectedServices[svc.id]}
+                    >
+                      {hasIcon && (
+                        <span className="mode-option-icon">
+                          {SERVICE_ICONS[svc.icon] || null}
+                        </span>
+                      )}
+                      {hasFavicon && (
+                        <span className="mode-option-icon">
+                          <img
+                            src={faviconPath(svc.id)}
+                            alt=""
+                            width="28"
+                            height="28"
+                            className="favicon-img"
+                          />
+                        </span>
+                      )}
+                      <span className={titleClass}>{svc.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
-          {selectedCount > 0 && (
+
+          {selectedCount > 0 && currentSvc && (
             <div className="credential-forms">
               <p className="intro-subheading mt-3">
-                Enter your details ({selectedCount} selected)
+                Enter your details ({effectiveCredIndex + 1} of {selectedCount} selected)
               </p>
-              {category.services.filter((s) => selectedServices[s.id]).map((svc) => {
+              {(() => {
+                const svc = currentSvc;
                 const cred = credentials[svc.id] || {};
                 const isEmailService = svc.id === 'email';
                 return (
@@ -662,7 +996,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
                     </InputGroup>
                   </div>
                 );
-              })}
+              })()}
             </div>
           )}
 
@@ -671,12 +1005,12 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
               <NavButton
                 label="Back"
                 variant="outline-secondary"
-                onClick={catIndex === 0 ? onBack : () => setCatIndex((i) => i - 1)}
+                onClick={handleCredBack}
               />
             )}
             <NavButton
-              label={isLastCategory ? 'Review' : 'Continue'}
-              onClick={handleCollectNext}
+              label={bottomButtonLabel}
+              onClick={handleBottomButton}
             />
           </div>
         </div>

@@ -16,18 +16,20 @@ export const ONBOARDING_STEPS = Object.freeze([
     options: [
       {
         id: 'easy',
-        title: 'Easy Mode',
-        description: 'We guide you step by step through everything.',
+        title: 'AI Mode',
+        icon: 'robot',
+        disabled: true,
+        badge: 'Coming Soon',
       },
       {
         id: 'auto',
-        title: 'Auto Mode',
-        description: 'We do the heavy lifting — you just confirm.',
+        title: 'Standard Mode',
+        icon: 'key',
       },
       {
         id: 'manual',
         title: 'Manual Mode',
-        description: 'Full control. We provide the tools, you decide.',
+        icon: 'clipboard',
       },
     ],
   },
