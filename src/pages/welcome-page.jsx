@@ -17,8 +17,8 @@ export function WelcomePage({ onNext }) {
         </h1>
         <h2 className="welcome-subtitle">Time for a digital health check!</h2>
         <p className="welcome-body">
-          Digital Healthcheck is a tool to help you better-secure your
-          digital accounts.
+          PassMan is a Password Management Onboarding tool to help you
+          better-secure your digital accounts.
         </p>
         <div className="welcome-button">
           <NavButton label="Tell me how" onClick={onNext} />

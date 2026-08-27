@@ -142,7 +142,7 @@ export function OnboardingFlow() {
         <section className="page">
           <div className="page-body">
             <h1 className="h3 page-heading">Unknown step</h1>
-            <p>No component is registered for step kind: {step.kind}</p>
+            <p className="intro-paragraph">No component is registered for step kind: {step.kind}</p>
           </div>
         </section>
       </>

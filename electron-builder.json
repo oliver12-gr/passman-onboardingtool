@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.digitalhealthcheck.app",
-  "productName": "Digital Healthcheck",
+  "appId": "com.passman.app",
+  "productName": "PassMan",
   "directories": {
     "output": "release",
     "buildResources": "build"
@@ -12,6 +12,7 @@
     "package.json"
   ],
   "win": {
+    "icon": "build/icon.png",
     "target": [
       { "target": "nsis", "arch": ["x64"] },
       { "target": "portable", "arch": ["x64"] }

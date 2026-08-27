@@ -1,9 +1,11 @@
 # Project planning (working notes, not part of shipped app)
 /project-planning/
 
+# Research / AI mode prototyping (not part of shipped app)
+/research/
+
 # Dependencies
 /node_modules/
-/package-lock.json
 /yarn.lock
 /pnpm-lock.yaml
 
@@ -12,6 +14,11 @@
 /build/
 /release/
 /out/
+
+# Large wordlist — reassembled from rockyou.part.* at build time
+# (see scripts/rockyou-parts.cjs). The parts are tracked in git;
+# the full file is too large for GitHub's 25 MB limit.
+/public/dictionaries/rockyou.txt
 
 # Vite
 *.local

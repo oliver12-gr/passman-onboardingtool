@@ -53,7 +53,7 @@ describe('Intro to onboarding integration', () => {
     await waitFor(() => {
       // First onboarding step (mode select) — progress should be > 0%.
       expect(
-        screen.getByLabelText(/Digital Healthcheck progress/),
+        screen.getByLabelText(/PassMan progress/),
       ).toBeInTheDocument();
     });
 

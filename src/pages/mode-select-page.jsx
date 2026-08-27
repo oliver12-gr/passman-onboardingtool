@@ -36,9 +36,9 @@ const MODE_ICONS = {
 };
 
 /**
- * Mode selection page. Presents three options (AI, Standard, Manual) as
- * side-by-side selectable cards with icons. AI Mode is disabled (coming
- * soon). Standard Mode is pre-selected as the default.
+ * Mode selection page. Presents two options (Standard, Manual) as
+ * side-by-side selectable cards with icons. Standard Mode is
+ * pre-selected as the default.
  *
  * When Standard (auto) mode is selected, the app checks whether the
  * Bitwarden CLI (`bw`) is installed. If not, a loading screen is shown

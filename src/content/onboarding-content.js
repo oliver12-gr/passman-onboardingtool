@@ -15,13 +15,6 @@ export const ONBOARDING_STEPS = Object.freeze([
     subtitle: 'How would you like to proceed?',
     options: [
       {
-        id: 'easy',
-        title: 'AI Mode',
-        icon: 'robot',
-        disabled: true,
-        badge: 'Coming Soon',
-      },
-      {
         id: 'auto',
         title: 'Standard Mode',
         icon: 'key',

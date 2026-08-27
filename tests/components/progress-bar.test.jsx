@@ -20,7 +20,7 @@ describe('ProgressBarTop', () => {
   it('exposes an aria-label describing the progress', () => {
     renderWithProgress(60);
     expect(
-      screen.getByLabelText(/Digital Healthcheck progress: 60%/),
+      screen.getByLabelText(/PassMan progress: 60%/),
     ).toBeInTheDocument();
   });
 

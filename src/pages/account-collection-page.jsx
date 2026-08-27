@@ -93,8 +93,7 @@ function lookupEmailUrl(email) {
  * deletion step.
  *
  * @param {object} props
- * @param {string} props.mode - 'easy' | 'auto' | 'manual'
- * @param {boolean} props.bitwardenConnected
+ * @param {string} props.mode - 'auto' | 'manual'
  * @param {function} props.onNext
  * @param {function} [props.onBack]
  */
@@ -156,7 +155,7 @@ function collectAccounts(selectedServices, credentials, customAccounts = []) {
   return accounts;
 }
 
-export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubProgress }) {
+export function AccountCollectionPage({ mode, onBack, onSubProgress }) {
   // Flow phases: 'collect' → 'custom-accounts' → 'review' → 'submit' → 'import-instructions' → 'done'
   const [phase, setPhase] = useState('collect');
   const [catIndex, setCatIndex] = useState(0);
@@ -176,7 +175,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
   // Index for paginating through custom accounts.
   const [customIndex, setCustomIndex] = useState(0);
 
-  const isAutoMode = mode === 'auto' || (mode === 'easy' && bitwardenConnected);
+  const isAutoMode = mode === 'auto';
   const category = ACCOUNT_CATEGORIES[catIndex];
 
   const { requestClose, registerClear, registerFile } = useCleanup();
@@ -363,7 +362,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
     try {
       const content = generateImportFile(importFormat, accounts);
       const fmt = IMPORT_FORMATS.find((f) => f.id === importFormat);
-      const defaultName = `digital-healthcheck-import.${fmt.extension}`;
+      const defaultName = `passman-import.${fmt.extension}`;
 
       if (window.appRuntime?.saveFile) {
         const result = await window.appRuntime.saveFile({
@@ -531,7 +530,7 @@ export function AccountCollectionPage({ mode, bitwardenConnected, onBack, onSubP
             <ProgressBar
               now={submitProgress}
               animated={isUploading}
-              className="strength-bar mt-3"
+              className="strength-bar"
             />
             <p className="strength-checking mt-2">
               {submitStatus}

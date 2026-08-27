@@ -92,17 +92,18 @@ body {
   color: var(--brand-green);
   font-weight: 700;
   text-align: center;
-  margin: calc(-3rem + 1.25rem) -2.5rem 0;
+  margin: calc(-3rem + 1.25rem) -2.5rem 1.25rem;
   padding: 1.25rem 1.5rem 0;
 }
 
 /* Checker card has smaller padding — adjust the breakout to match */
 .checker-card .page-heading {
-  margin: calc(-2rem + 1.25rem) -1.5rem 0;
+  margin: calc(-2rem + 1.25rem) -1.5rem 1.25rem;
 }
 
 /* Spaced paragraphs for intro pages */
 .intro-paragraph {
+  margin-top: 0;
   margin-bottom: 1.25rem;
   line-height: 1.6;
 }
@@ -111,8 +112,22 @@ body {
   margin-bottom: 0;
 }
 
-/* Green primary buttons (overrides Bootstrap default) */
+/* Green primary buttons (overrides Bootstrap default blue) */
 .btn-primary {
+  --bs-btn-color: #ffffff;
+  --bs-btn-bg: var(--brand-green);
+  --bs-btn-border-color: var(--brand-green);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-bg: var(--brand-green-hover);
+  --bs-btn-hover-border-color: var(--brand-green-hover);
+  --bs-btn-focus-shadow-rgb: 46, 125, 79;
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-active-bg: var(--brand-green-hover);
+  --bs-btn-active-border-color: var(--brand-green-hover);
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: #ffffff;
+  --bs-btn-disabled-bg: var(--brand-green);
+  --bs-btn-disabled-border-color: var(--brand-green);
   background-color: var(--brand-green);
   border-color: var(--brand-green);
 }
@@ -126,6 +141,38 @@ body {
 .btn-primary:active {
   background-color: var(--brand-green-hover);
   border-color: var(--brand-green-hover);
+}
+
+/* Green outline buttons (overrides Bootstrap default blue) */
+.btn-outline-primary {
+  --bs-btn-color: var(--brand-green);
+  --bs-btn-border-color: var(--brand-green);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-hover-bg: var(--brand-green);
+  --bs-btn-hover-border-color: var(--brand-green);
+  --bs-btn-focus-shadow-rgb: 46, 125, 79;
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-active-bg: var(--brand-green-hover);
+  --bs-btn-active-border-color: var(--brand-green-hover);
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --bs-btn-disabled-color: var(--brand-green);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: var(--brand-green);
+  color: var(--brand-green);
+  border-color: var(--brand-green);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--brand-green);
+  border-color: var(--brand-green);
+  color: #ffffff;
+}
+
+.btn-outline-primary:active {
+  background-color: var(--brand-green-hover);
+  border-color: var(--brand-green-hover);
+  color: #ffffff;
 }
 
 /* Welcome page */
@@ -341,6 +388,12 @@ body {
 
 .progress-bar-main {
   flex: 1;
+}
+
+/* Green progress bar fill (overrides Bootstrap default blue) */
+.progress-bar {
+  --bs-progress-bar-bg: var(--brand-green);
+  background-color: var(--brand-green);
 }
 
 /* Streamer animation when progress reaches 100% */
@@ -758,6 +811,7 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--brand-green);
+  margin-top: 0;
   margin-bottom: 0.75rem;
 }
 

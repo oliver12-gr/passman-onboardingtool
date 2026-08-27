@@ -17,7 +17,7 @@ let dictionaryLoading = null;
  * Created on demand and deleted on app cleanup. This avoids relying
  * on the system PATH and ensures the CLI is removed when the app closes.
  */
-const BW_TEMP_DIR = path.join(os.tmpdir(), 'digital-healthcheck-bw');
+const BW_TEMP_DIR = path.join(os.tmpdir(), 'passman-bw');
 
 /**
  * Returns the path to the bw executable in the temp directory.
@@ -561,9 +561,10 @@ function createWindow() {
     minWidth: 360,
     minHeight: 600,
     resizable: true,
-    title: 'Digital Healthcheck',
+    title: 'PassMan',
     autoHideMenuBar: true,
     frame: false,
+    icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

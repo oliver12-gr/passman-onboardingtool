@@ -23,7 +23,7 @@ const MOBILE_URLS = {
 
 /**
  * Install Bitwarden checklist page. Shown after successful Bitwarden
- * sign-in in auto/easy mode. Guides the user through installing
+ * sign-in in auto mode. Guides the user through installing
  * Bitwarden on their desktop, browser, and mobile device.
  *
  * The app detects whether steps 1 and 2 are complete:

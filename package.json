@@ -1,13 +1,13 @@
 {
-  "name": "digital-healthcheck",
-  "version": "0.1.0",
-  "description": "Secure-by-design onboarding workflow for adopting a password manager",
+  "name": "passman",
+  "version": "1.0.0",
+  "description": "PassMan v1.0.0 — Password Management Onboarding tool",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/rockyou-parts.cjs join && vite",
+    "build": "node scripts/rockyou-parts.cjs join && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -15,8 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "electron:dev": "vite build && electron .",
-    "dist": "vite build && electron-builder --win"
+    "electron:dev": "node scripts/rockyou-parts.cjs join && vite build && electron .",
+    "dist": "node scripts/rockyou-parts.cjs join && vite build && electron-builder --win"
   },
   "author": "",
   "license": "UNLICENSED",
